@@ -1,0 +1,180 @@
+#Quiz semana 14
+
+if(!require(tidyverse)){install.packages("tidyverse")}
+if(!require(ggpubr)){install.packages("ggpubr")}
+if(!require(rstatix)){install.packages("rstatix")}
+if(!require(car)){install.packages("car")}
+if(!require(multcomp)){install.packages("multcomp")}
+if(!require(ggplot2)){install.packages("ggplot2")}
+
+library(tidyverse)
+library(ggpubr)
+library(rstatix)
+library(multcomp)
+
+##Ejercicio ¿Qué otro tipo de Anovas existen? ¿Es lo mismo dos factores que anidado? ¿Cuál es el caso de los niveles de azúcar en los nectarios de gulupa y la maracuya? Haga el análisis de varianza para este caso.
+
+##RTA: Existe otro tipo de ANOVA que se denomina ANOVA de variables dependientes o ANOVA con medidas repetidas, este se usa cuando todos los factores se aplican a un sujeto, por ejemplo si se pide la opinión de 5 productos deferentes a un solo grupo de personas. El anidado es una prueva de que se deriva del ANOVA de una vía que cada grupo se divide en subgrupos.  
+
+Input = ("
+Var Fase  Azucarmg
+Gulupa  F1  0.97
+Gulupa  F2  8.25
+Gulupa  F3  35.34
+Gulupa  F4  32.14
+Gulupa  F1  0.97
+Gulupa  F2  8.25
+Gulupa  F2  12.56
+Gulupa  F2  6.25
+Gulupa  F2  8.36
+Gulupa  F2  4.852
+Gulupa  F2  11.2
+Gulupa  F2  8.56
+Gulupa  F1  1.2
+Gulupa  F1  0.5
+Gulupa  F1  0.35
+Gulupa  F1  0.89
+Gulupa  F1  0.96
+Gulupa  F3  25.34
+Gulupa  F3  39.35
+Gulupa  F3  30.23
+Gulupa  F3  34.2
+Gulupa  F3  30.25
+Gulupa  F3  38.26
+Gulupa  F3  33.5
+Gulupa  F3  33.5
+Gulupa  F4  31.25
+Gulupa  F4  37.25
+Gulupa  F4  28.36
+Maracuya    F1  0.5
+Maracuya    F1  0.3
+Maracuya    F1  0.2
+Maracuya    F2  5.6
+Maracuya    F2  8.3
+Maracuya    F2  6.5
+Maracuya    F2  4.2
+Maracuya    F2  6.32
+Maracuya    F2  5.25
+Maracuya    F3  19.8
+Maracuya    F3  14.2
+Maracuya    F3  21.3
+Maracuya    F3  22.5
+Maracuya    F3  22.65
+Maracuya    F4  35.2
+Maracuya    F4  32.54
+Maracuya    F4  35.25
+Maracuya    F4  30.25
+")
+
+Frutas = read.table(textConnection(Input), header = T)
+
+ggplot(Frutas) +
+  geom_boxplot(aes(x = Fase, y = Azucarmg, fill = Var))
+
+indepen <- aov(Azucarmg ~ Var + Fase, Frutas)
+
+summary(indepen)
+#            Df Sum Sq Mean Sq F value Pr(>F)    
+#Var          1     93    93.4   5.784 0.0208 *  
+#Fase         3   7951  2650.4 164.117 <2e-16 ***
+#Residuals   41    662    16.1                   
+#---
+#Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+interact <- aov(Azucarmg ~ Var*Fase, Frutas)
+
+summary(interact)
+#            Df Sum Sq Mean Sq F value   Pr(>F)    
+#Var          1     93    93.4   11.53  0.00162 ** 
+#Fase         3   7951  2650.4  327.16  < 2e-16 ***
+#Var:Fase     3    354   118.1   14.58 1.79e-06 ***
+#Residuals   38    308     8.1                     
+#---
+#Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+TukeyHSD(indepen)
+#  Tukey multiple comparisons of means
+#    95% family-wise confidence level
+#
+#Fit: aov(formula = Azucarmg ~ Var + Fase, data = Frutas)
+#
+#$Var
+#                     diff       lwr        upr     p adj
+#Maracuya-Gulupa -2.919794 -5.371637 -0.4679504 0.0207718
+#
+#$Fase
+#           diff        lwr       upr     p adj
+#F2-F1  7.152259  2.6970626 11.607456 0.0005789
+#F3-F1 28.084274 23.6290774 32.539470 0.0000000
+#F4-F1 32.679959 27.5758899 37.784028 0.0000000
+#F3-F2 20.932015 16.8649953 24.999034 0.0000000
+#F4-F2 25.527700 20.7586965 30.296703 0.0000000
+#F4-F3  4.595685 -0.1733182  9.364688 0.0625418
+
+##Se observa que en solo una de las relaciones se puede afirmar que las medias se solapan, lo que quiere decir que no hay una variación significativa entre estas. F3 - F4
+
+TukeyHSD(interact)
+#  Tukey multiple comparisons of means
+#    95% family-wise confidence level
+#
+#Fit: aov(formula = Azucarmg ~ Var * Fase, data = Frutas)
+#
+#$Var
+#                     diff       lwr       upr     p adj
+#Maracuya-Gulupa -2.919794 -4.660515 -1.179072 0.0016162
+#
+#$Fase
+#           diff       lwr       upr     p adj
+#F2-F1  7.152259  3.986375 10.318143 0.0000027
+#F3-F1 28.084274 24.918390 31.250158 0.0000000
+#F4-F1 32.679959 29.052983 36.306935 0.0000000
+#F3-F2 20.932015 18.041971 23.822058 0.0000000
+#F4-F2 25.527700 22.138823 28.916576 0.0000000
+#F4-F3  4.595685  1.206808  7.984561 0.0042754
+#
+#$`Var:Fase`
+#                               diff         lwr       upr     p adj
+#Maracuya:F1-Gulupa:F1    -0.5009524  -6.7967652  5.794860 0.9999957
+#Gulupa:F2-Gulupa:F1       7.7009643   2.9791047 12.422824 0.0001628
+#Maracuya:F2-Gulupa:F1     5.1940476   0.1182010 10.269894 0.0417043
+#Gulupa:F3-Gulupa:F1      32.4957143  27.8979027 37.093526 0.0000000
+#Maracuya:F3-Gulupa:F1    19.2557143  13.9135399 24.597889 0.0000000
+#Gulupa:F4-Gulupa:F1      31.4157143  25.6972583 37.134170 0.0000000
+#Maracuya:F4-Gulupa:F1    32.4757143  26.7572583 38.194170 0.0000000
+#Gulupa:F2-Maracuya:F1     8.2019167   2.0252783 14.378555 0.0029966
+#Maracuya:F2-Maracuya:F1   5.6950000  -0.7562884 12.146288 0.1175329
+#Gulupa:F3-Maracuya:F1    32.9966667  26.9143336 39.079000 0.0000000
+#Maracuya:F3-Maracuya:F1  19.7566667  13.0938046 26.419529 0.0000000
+#Gulupa:F4-Maracuya:F1    31.9166667  24.9484788 38.884855 0.0000000
+#Maracuya:F4-Maracuya:F1  32.9766667  26.0084788 39.944855 0.0000000
+#Maracuya:F2-Gulupa:F2    -2.5069167  -7.4341696  2.420336 0.7291744
+#Gulupa:F3-Gulupa:F2      24.7947500  20.3615261 29.227974 0.0000000
+#Maracuya:F3-Gulupa:F2    11.5547500   6.3535550 16.755945 0.0000005
+#Gulupa:F4-Gulupa:F2      23.7147500  18.1277703 29.301730 0.0000000
+#Maracuya:F4-Gulupa:F2    24.7747500  19.1877703 30.361730 0.0000000
+#Gulupa:F3-Maracuya:F2    27.3016667  22.4931602 32.110173 0.0000000
+#Maracuya:F3-Maracuya:F2  14.0616667   8.5371133 19.586220 0.0000000
+#Gulupa:F4-Maracuya:F2    26.2216667  20.3324730 32.110860 0.0000000
+#Maracuya:F4-Maracuya:F2  27.2816667  21.3924730 33.170860 0.0000000
+#Maracuya:F3-Gulupa:F3   -13.2400000 -18.3288449 -8.151155 0.0000000
+#Gulupa:F4-Gulupa:F3      -1.0800000  -6.5625409  4.402541 0.9981680
+#Maracuya:F4-Gulupa:F3    -0.0200000  -5.5025409  5.462541 1.0000000
+#Gulupa:F4-Maracuya:F3    12.1600000   6.0397704 18.280230 0.0000047
+#Maracuya:F4-Maracuya:F3  13.2200000   7.0997704 19.340230 0.0000008
+#Maracuya:F4-Gulupa:F4     1.0600000  -5.3912884  7.511288 0.9994309
+
+##Aqui se especifica la fase y la variacion en la que se dan las menores variaciones entre medias, esto quiere decir que la producción de azucar en mg es casi la misma. 
+
+pairwise.t.test(Frutas$Azucarmg, Frutas$Fase, p.adjust.method = "BH")
+#	Pairwise comparisons using t tests with pooled SD 
+#
+#data:  Frutas$Azucarmg and Frutas$Fase 
+#
+#   F1      F2      F3    
+#F2 0.0012  -       -     
+#F3 < 2e-16 4.1e-15 -     
+#F4 < 2e-16 2.7e-15 0.0475
+#
+#P value adjustment method: BH
+
+##Se observa que en todas las relaciones relalizadas (exceptuando a F3-F4) las medias tienen una variacion significativa esntre ellas. Con la excepcion, debido a que el p-valor se encuentra demasiado proximo al valor critico no se puede afirmar que las medias de las muestras son totalmente diferentes. 
